@@ -46,6 +46,14 @@ fn main() {
             // Apply platform-specific window settings
             window::setup_overlay_window(&main_window)?;
 
+            // Ensure window starts unlocked (not click-through)
+            // This is critical for dragging and interacting
+            if let Err(e) = main_window.set_ignore_cursor_events(false) {
+                log::warn!("Failed to set ignore cursor events to false: {}", e);
+            } else {
+                info!("Window starts unlocked and draggable");
+            }
+
             // Setup system tray using app handle
             let app_handle = app.handle().clone();
             tray::setup_tray(&app_handle)?;
@@ -58,6 +66,10 @@ fn main() {
             if let Err(e) = state.load_preferences(&app_handle) {
                 log::warn!("Failed to load preferences: {}", e);
             }
+
+            // Log initial state
+            info!("Initial state - Locked: {}, Visible: {}",
+                  state.is_locked(), state.is_visible());
 
             info!("Application setup complete");
             Ok(())

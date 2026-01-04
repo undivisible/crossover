@@ -1,0 +1,507 @@
+// ============================================================================
+// Variables
+// ============================================================================
+
+$black: #000000;
+$white: #ffffff;
+$gray-100: #f3f4f6;
+$gray-200: #e5e7eb;
+$gray-300: #d1d5db;
+$gray-400: #9ca3af;
+$gray-500: #6b7280;
+$gray-600: #4b5563;
+$gray-700: #374151;
+$gray-800: #1f2937;
+$gray-900: #111827;
+
+$accent: #3b82f6;
+$success: #10b981;
+$error: #ef4444;
+$warning: #f59e0b;
+
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2xl: 48px;
+
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+
+$transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+$transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+$transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+$font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+
+// ============================================================================
+// Reset & Base
+// ============================================================================
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+html,
+body {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	font-family: $font-sans;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	background: $black;
+	color: $white;
+}
+
+body {
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+button {
+	font-family: inherit;
+	cursor: pointer;
+	border: none;
+	background: none;
+	color: inherit;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+input {
+	font-family: inherit;
+}
+
+// ============================================================================
+// Settings Window Layout
+// ============================================================================
+
+.settings-window {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	background: $black;
+	overflow: hidden;
+}
+
+.settings-content {
+	flex: 1;
+	padding: $spacing-xl;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+// ============================================================================
+// Settings Sections
+// ============================================================================
+
+.settings-section {
+	margin-bottom: $spacing-2xl;
+
+	&:last-child {
+		margin-bottom: 0;
+	}
+
+	h3 {
+		font-size: 13px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: $gray-400;
+		margin-bottom: $spacing-md;
+	}
+}
+
+// ============================================================================
+// Crosshair Grid
+// ============================================================================
+
+.crosshair-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+	gap: $spacing-md;
+	margin-bottom: $spacing-md;
+}
+
+.crosshair-item {
+	aspect-ratio: 1;
+	background: rgba(255, 255, 255, 0.03);
+	border-radius: $radius-lg;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all $transition-fast;
+	border: 2px solid transparent;
+	padding: $spacing-md;
+
+	&:hover {
+		background: rgba(255, 255, 255, 0.06);
+		transform: scale(1.05);
+	}
+
+	&:active {
+		transform: scale(0.98);
+	}
+
+	&.active {
+		background: rgba(59, 130, 246, 0.1);
+		border-color: $accent;
+		box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+	}
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.5));
+		pointer-events: none;
+	}
+}
+
+// ============================================================================
+// Sliders
+// ============================================================================
+
+.slider-control {
+	display: flex;
+	align-items: center;
+	gap: $spacing-lg;
+}
+
+.slider {
+	flex: 1;
+	height: 6px;
+	-webkit-appearance: none;
+	appearance: none;
+	background: rgba(255, 255, 255, 0.08);
+	border-radius: 3px;
+	outline: none;
+	cursor: pointer;
+
+	&::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 20px;
+		height: 20px;
+		background: $white;
+		border-radius: 50%;
+		cursor: pointer;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+		transition: transform $transition-fast;
+
+		&:hover {
+			transform: scale(1.15);
+		}
+
+		&:active {
+			transform: scale(0.95);
+		}
+	}
+
+	&::-moz-range-thumb {
+		width: 20px;
+		height: 20px;
+		background: $white;
+		border-radius: 50%;
+		cursor: pointer;
+		border: none;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+		transition: transform $transition-fast;
+
+		&:hover {
+			transform: scale(1.15);
+		}
+
+		&:active {
+			transform: scale(0.95);
+		}
+	}
+
+	&::-webkit-slider-runnable-track {
+		height: 6px;
+		background: rgba(255, 255, 255, 0.08);
+		border-radius: 3px;
+	}
+
+	&::-moz-range-track {
+		height: 6px;
+		background: rgba(255, 255, 255, 0.08);
+		border-radius: 3px;
+	}
+}
+
+.slider-value {
+	min-width: 70px;
+	text-align: right;
+	font-size: 15px;
+	font-weight: 600;
+	color: $white;
+	font-variant-numeric: tabular-nums;
+}
+
+// ============================================================================
+// Color Picker
+// ============================================================================
+
+.color-control {
+	display: flex;
+	align-items: center;
+	gap: $spacing-lg;
+}
+
+.color-picker {
+	width: 64px;
+	height: 64px;
+	border: none;
+	border-radius: $radius-lg;
+	cursor: pointer;
+	background: transparent;
+	overflow: hidden;
+	transition: transform $transition-fast;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+	&::-webkit-color-swatch-wrapper {
+		padding: 0;
+	}
+
+	&::-webkit-color-swatch {
+		border: 3px solid rgba(255, 255, 255, 0.15);
+		border-radius: $radius-lg;
+	}
+
+	&::-moz-color-swatch {
+		border: 3px solid rgba(255, 255, 255, 0.15);
+		border-radius: $radius-lg;
+	}
+
+	&:hover {
+		transform: scale(1.05);
+	}
+
+	&:active {
+		transform: scale(0.95);
+	}
+}
+
+.color-input {
+	flex: 1;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: $radius-lg;
+	padding: $spacing-md $spacing-lg;
+	color: $white;
+	font-size: 16px;
+	font-weight: 600;
+	transition: all $transition-fast;
+	font-variant-numeric: tabular-nums;
+	text-transform: uppercase;
+
+	&:focus {
+		outline: none;
+		background: rgba(255, 255, 255, 0.06);
+		border-color: $accent;
+		box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+	}
+
+	&:hover {
+		border-color: rgba(255, 255, 255, 0.12);
+	}
+}
+
+// ============================================================================
+// Reticle Options
+// ============================================================================
+
+.reticle-options {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: $spacing-md;
+}
+
+.reticle-option {
+	padding: $spacing-lg;
+	background: rgba(255, 255, 255, 0.03);
+	border: 2px solid transparent;
+	border-radius: $radius-lg;
+	font-size: 14px;
+	font-weight: 600;
+	transition: all $transition-fast;
+	color: $gray-300;
+
+	&:hover {
+		background: rgba(255, 255, 255, 0.06);
+		color: $white;
+		transform: translateY(-2px);
+	}
+
+	&:active {
+		transform: translateY(0);
+	}
+
+	&.active {
+		background: rgba(59, 130, 246, 0.1);
+		border-color: $accent;
+		color: $white;
+		box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+	}
+}
+
+// ============================================================================
+// Action Buttons
+// ============================================================================
+
+.action-buttons {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: $spacing-md;
+}
+
+.action-btn {
+	padding: $spacing-lg;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: $radius-lg;
+	font-size: 14px;
+	font-weight: 600;
+	transition: all $transition-fast;
+	color: $white;
+
+	&:hover {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.12);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	}
+
+	&:active {
+		transform: translateY(0);
+		background: rgba(255, 255, 255, 0.12);
+	}
+}
+
+// ============================================================================
+// Toast Notifications
+// ============================================================================
+
+.toast-container {
+	position: fixed;
+	bottom: $spacing-lg;
+	right: $spacing-lg;
+	z-index: 11000;
+	display: flex;
+	flex-direction: column;
+	gap: $spacing-sm;
+	pointer-events: none;
+}
+
+.toast {
+	background: $gray-900;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: $radius-lg;
+	padding: $spacing-md $spacing-lg;
+	color: $white;
+	font-size: 14px;
+	font-weight: 500;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	animation: slideInUp $transition-base;
+	pointer-events: auto;
+	min-width: 200px;
+	opacity: 0;
+	transform: translateY(20px);
+	transition: opacity $transition-base, transform $transition-base;
+
+	&.show {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	&.toast-success {
+		border-color: rgba(16, 185, 129, 0.3);
+		background: rgba(16, 185, 129, 0.05);
+	}
+
+	&.toast-error {
+		border-color: rgba(239, 68, 68, 0.3);
+		background: rgba(239, 68, 68, 0.05);
+	}
+
+	&.toast-warning {
+		border-color: rgba(245, 158, 11, 0.3);
+		background: rgba(245, 158, 11, 0.05);
+	}
+
+	&.toast-info {
+		border-color: rgba(59, 130, 246, 0.3);
+		background: rgba(59, 130, 246, 0.05);
+	}
+}
+
+// ============================================================================
+// Animations
+// ============================================================================
+
+@keyframes slideInUp {
+	from {
+		transform: translateY(20px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+// ============================================================================
+// Scrollbar Styling
+// ============================================================================
+
+::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 5px;
+
+	&:hover {
+		background: rgba(255, 255, 255, 0.15);
+	}
+
+	&:active {
+		background: rgba(255, 255, 255, 0.2);
+	}
+}
+
+// ============================================================================
+// Focus Visible
+// ============================================================================
+
+*:focus-visible {
+	outline: 2px solid $accent;
+	outline-offset: 2px;
+}
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+.hidden {
+	display: none !important;
+}

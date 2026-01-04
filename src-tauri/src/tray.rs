@@ -333,25 +333,8 @@ fn handle_hide(app: &AppHandle) -> Result<(), String> {
 fn handle_settings(app: &AppHandle) -> Result<(), String> {
     info!("Tray: Settings");
 
-    // Emit event to open settings in frontend
+    // Emit event to open settings window
     app.emit("open-settings", ()).map_err(|e| e.to_string())?;
-
-    // Ensure window is visible, unlocked, and focused
-    let state = app.try_state::<Arc<AppState>>().ok_or("State not found")?;
-
-    // Unlock if locked so user can interact
-    if state.is_locked() {
-        state.set_locked(false);
-        if let Some(win) = app.get_webview_window("main") {
-            window::set_click_through(&win, false)?;
-        }
-        app.emit("lock-changed", false).map_err(|e| e.to_string())?;
-    }
-
-    if let Some(win) = app.get_webview_window("main") {
-        win.show().map_err(|e| e.to_string())?;
-        win.set_focus().map_err(|e| e.to_string())?;
-    }
 
     Ok(())
 }
@@ -359,13 +342,11 @@ fn handle_settings(app: &AppHandle) -> Result<(), String> {
 fn handle_choose_crosshair(app: &AppHandle) -> Result<(), String> {
     info!("Tray: Choose crosshair");
 
-    // Emit event to open crosshair chooser in frontend
+    // Emit event to open crosshair chooser modal in main window
     app.emit("open-chooser", ()).map_err(|e| e.to_string())?;
 
-    // Ensure window is visible, unlocked, and focused
+    // Unlock window temporarily so user can interact with chooser
     let state = app.try_state::<Arc<AppState>>().ok_or("State not found")?;
-
-    // Unlock if locked so user can interact
     if state.is_locked() {
         state.set_locked(false);
         if let Some(win) = app.get_webview_window("main") {

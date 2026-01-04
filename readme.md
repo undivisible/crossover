@@ -2,7 +2,7 @@
   <img style="width:200px; height:200px;" width="200" height="200" src="https://github.com/lacymorrow/crossover/raw/main/src/static/icons/icon.png">
 </p>
 
-# CrossOver [<img src="https://github.com/lacymorrow/crossover/raw/main/src/static/meta/patreon-button.webp" height="40"  style="height:40px;" align="right" />](https://www.patreon.com/bePatron?u=55065733) [<img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" height="40"  style="height:40px;" align="right" />](https://www.buymeacoffee.com/lm)
+# CrossOver (Tauri Version) (Original README, not updated) [<img src="https://github.com/lacymorrow/crossover/raw/main/src/static/meta/patreon-button.webp" height="40"  style="height:40px;" align="right" />](https://www.patreon.com/bePatron?u=55065733) [<img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" height="40"  style="height:40px;" align="right" />](https://www.buymeacoffee.com/lm)
 
 > 🎯 Adjustable Crosshair Overlay for any screen
 
@@ -553,18 +553,20 @@ Print the app version to `stdout` (Good for CI).
 
 An extra big thanks to the crosshair providers, as this wouldn't be possible without them:
 
+- Lacy Morrow (Original Author) - [Github](https://github.com/lacymorrow)
+
 - Reddit user [/u/IrisFlame](https://www.reddit.com/user/irisflame/)
 
 - [Kenney.nl Crosshair Pack](https://kenney.nl/assets/crosshair-pack) (_donate to him, not me_)
 
 > Gaming, Crosshair, Crossover App
 
-See CrossOver in the [Electron Apps library](https://www.electronjs.org/apps/crossover)
+See the original Electron CrossOver in the [Electron Apps library](https://www.electronjs.org/apps/crossover)
 
 Created by [Lacy Morrow](http://lacymorrow.com)
 
 
-# Support this project
+# Support this project (Original Author)
 
 > **TL,DR: If you enjoy this project, and are financially able, why not donate $3?**
 
@@ -581,4 +583,3 @@ If you would like to see specific features or improvements added to CrossOver, c
 - **ETH:** `0x5be1074a5148F8D723dE1F2Dd326e1B15c82553D`
 
 <a href="https://www.patreon.com/bePatron?u=55065733" target="_blank"><img src="https://github.com/lacymorrow/crossover/raw/main/src/static/meta/patreon-button.webp" style="height:50px;" height="50" /></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://opencollective.com/crossover/donate" target="_blank"><img src="https://opencollective.com/crossover/donate/button@2x.png?color=blue" style="height:50px;" height="50" /></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://www.buymeacoffee.com/lm" target="_blank"><img style="height:50px;" height="50" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" ></a>
-

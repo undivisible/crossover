@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="color-scheme" content="dark" />
+		<meta
+			http-equiv="Content-Security-Policy"
+			content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: data: blob:;"
+		/>
+		<title>CrossOver Settings</title>
+		<link rel="stylesheet" href="/src-frontend/styles/settings.scss" />
+	</head>
+	<body>
+		<div class="settings-window">
+			<div class="settings-content">
+				<!-- Crosshair selection -->
+				<section class="settings-section">
+					<h3>Crosshair</h3>
+					<div id="crosshair-grid" class="crosshair-grid">
+						<!-- Crosshair options will be populated by JavaScript -->
+					</div>
+				</section>
+
+				<!-- Size control -->
+				<section class="settings-section">
+					<h3>Size</h3>
+					<div class="slider-control">
+						<input
+							type="range"
+							id="size-slider"
+							min="10"
+							max="500"
+							value="100"
+							class="slider"
+						/>
+						<span id="size-value" class="slider-value">100px</span>
+					</div>
+				</section>
+
+				<!-- Opacity control -->
+				<section class="settings-section">
+					<h3>Opacity</h3>
+					<div class="slider-control">
+						<input
+							type="range"
+							id="opacity-slider"
+							min="0"
+							max="100"
+							value="100"
+							class="slider"
+						/>
+						<span id="opacity-value" class="slider-value"
+							>100%</span
+						>
+					</div>
+				</section>
+
+				<!-- Color picker -->
+				<section class="settings-section">
+					<h3>Color</h3>
+					<div class="color-control">
+						<input
+							type="color"
+							id="color-picker"
+							value="#00FF00"
+							class="color-picker"
+						/>
+						<input
+							type="text"
+							id="color-input"
+							value="#00FF00"
+							class="color-input"
+						/>
+					</div>
+				</section>
+
+				<!-- Reticle selection -->
+				<section class="settings-section">
+					<h3>Reticle Overlay</h3>
+					<div class="reticle-options">
+						<button
+							class="reticle-option active"
+							data-reticle="none"
+						>
+							None
+						</button></button>
+						<button class="reticle-option" data-reticle="circle">
+							Circle
+						</button>
+						<button class="reticle-option" data-reticle="cross">
+							Cross
+						</button>
+						<button class="reticle-option" data-reticle="dot">
+							Dot
+						</button>
+					</div>
+				</section>
+
+				<!-- Actions -->
+				<section class="settings-section">
+					<h3>Window Actions</h3>
+					<div class="action-buttons">
+						<button id="btn-center" class="action-btn">
+							Center
+						</button>
+						<button id="btn-next-display" class="action-btn">
+							Next Display
+						</button>
+						<button id="btn-reset" class="action-btn">
+							Reset
+						</button>
+					</div>
+				</section>
+
+				<!-- Advanced settings -->
+				<section class="settings-section">
+					<h3>Advanced</h3>
+					<div class="action-buttons">
+						<button id="btn-duplicate" class="action-btn">
+							Create Duplicate
+						</button>
+						<button id="btn-import" class="action-btn">
+							Import Custom...
+						</button>
+					</div>
+				</section>
+			</div>
+		</div>
+
+		<!-- Toast notifications container -->
+		<div id="toast-container" class="toast-container"></div>
+
+		<!-- Settings window script -->
+		<script type="module" src="/src-frontend/settings.ts"></script>
+	</body>
+</html>
