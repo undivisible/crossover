@@ -1,0 +1,721 @@
+// CrossOver Tauri - Main Stylesheet
+// ==================================
+
+@use "variables" as *;
+
+// Reset and base styles
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: $font-family;
+  font-size: $font-size-md;
+  line-height: $line-height-normal;
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+// Disable text selection globally for overlay
+body {
+  -webkit-user-drag: none;
+}
+
+img {
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+input {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+// ============================================================================
+// Main App Container
+// ============================================================================
+
+.crossover-app {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: transparent;
+  @include flex-center;
+
+  &.locked {
+    .crosshair-wrapper {
+      // No visual change when locked, just click-through
+    }
+  }
+
+  &.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+// ============================================================================
+// Crosshair
+// ============================================================================
+
+.crosshair-wrapper {
+  position: relative;
+  @include flex-center;
+  transition: opacity $transition-normal;
+}
+
+.crosshair {
+  width: var(--crosshair-size, 100px);
+  height: var(--crosshair-size, 100px);
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+}
+
+// ============================================================================
+// Reticle Overlay
+// ============================================================================
+
+.reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--crosshair-size, 100px);
+  height: var(--crosshair-size, 100px);
+  pointer-events: none;
+  color: var(--crosshair-color, #00ff00);
+  z-index: $z-reticle;
+
+  &.hidden {
+    display: none;
+  }
+}
+
+.reticle-shape {
+  &.hidden {
+    display: none;
+  }
+}
+
+// ============================================================================
+// Drag Handle
+// ============================================================================
+
+.drag-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  cursor: grab;
+  z-index: $z-drag-handle;
+  @include flex-center;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.hidden {
+    display: none;
+  }
+}
+
+.drag-handle-icon {
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  transition: opacity $transition-normal;
+  color: rgba(255, 255, 255, 0.7);
+
+  .drag-handle:hover & {
+    opacity: 1;
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// ============================================================================
+// Lock Indicator
+// ============================================================================
+
+.lock-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  z-index: $z-lock-indicator;
+  transition: opacity $transition-normal;
+
+  &.hidden {
+    display: none;
+  }
+
+  &.animate {
+    animation: lock-pulse 1s ease-out;
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
+  }
+}
+
+@keyframes lock-pulse {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+// ============================================================================
+// Settings Panel
+// ============================================================================
+
+.settings-panel {
+  position: fixed;
+  top: $spacing-md;
+  right: $spacing-md;
+  width: $settings-width;
+  max-height: calc(100vh - #{$spacing-md * 2});
+  background: var(--color-bg);
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+  z-index: $z-settings-panel;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  &.hidden {
+    display: none;
+  }
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  border-bottom: 1px solid var(--color-border);
+
+  h2 {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+  }
+}
+
+.settings-close {
+  width: 28px;
+  height: 28px;
+  border-radius: $radius-sm;
+  @include flex-center;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-md;
+  @include scrollbar-thin;
+}
+
+.settings-section {
+  margin-bottom: $spacing-lg;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  h3 {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: $spacing-sm;
+  }
+}
+
+// ============================================================================
+// Slider Control
+// ============================================================================
+
+.slider-control {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.slider {
+  flex: 1;
+  height: $slider-track-height;
+  appearance: none;
+  background: $slider-track-bg;
+  border-radius: $radius-full;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: $slider-thumb-size;
+    height: $slider-thumb-size;
+    background: $color-primary;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform $transition-fast;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+
+  &::-moz-range-thumb {
+    width: $slider-thumb-size;
+    height: $slider-thumb-size;
+    background: $color-primary;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.slider-value {
+  min-width: 50px;
+  text-align: right;
+  font-size: $font-size-sm;
+  font-family: $font-family-mono;
+  color: var(--color-text-muted);
+}
+
+// ============================================================================
+// Color Control
+// ============================================================================
+
+.color-control {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.color-picker {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid var(--color-border);
+  border-radius: $radius-md;
+  cursor: pointer;
+  overflow: hidden;
+
+  &::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  &::-webkit-color-swatch {
+    border: none;
+    border-radius: $radius-sm;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.color-input {
+  flex: 1;
+  height: 36px;
+  padding: 0 $spacing-sm;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-border);
+  border-radius: $radius-md;
+  color: var(--color-text);
+  font-family: $font-family-mono;
+  font-size: $font-size-sm;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+}
+
+// ============================================================================
+// Reticle Options
+// ============================================================================
+
+.reticle-options {
+  display: flex;
+  gap: $spacing-xs;
+}
+
+.reticle-option {
+  flex: 1;
+  height: $btn-height-sm;
+  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: $font-size-sm;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  &.active {
+    background: var(--color-primary);
+  }
+}
+
+// ============================================================================
+// Action Buttons
+// ============================================================================
+
+.action-buttons {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.action-btn {
+  flex: 1;
+  height: $btn-height-md;
+  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  transition: background $transition-fast, transform $transition-fast;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// ============================================================================
+// Crosshair Grid
+// ============================================================================
+
+.crosshair-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $grid-gap;
+}
+
+.crosshair-item {
+  aspect-ratio: 1;
+  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  overflow: hidden;
+  @include flex-center;
+  transition: border-color $transition-fast, background $transition-fast;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  &.active {
+    border-color: var(--color-primary);
+  }
+
+  img {
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
+    pointer-events: none;
+  }
+}
+
+// ============================================================================
+// Modal
+// ============================================================================
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: $bg-overlay;
+  z-index: $z-modal;
+  @include flex-center;
+  padding: $spacing-lg;
+
+  &.hidden {
+    display: none;
+  }
+}
+
+.modal-content {
+  width: $modal-width;
+  max-width: $modal-max-width;
+  max-height: $modal-max-height;
+  background: var(--color-bg);
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  border-bottom: 1px solid var(--color-border);
+
+  h2 {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+  }
+}
+
+.modal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: $radius-sm;
+  @include flex-center;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.modal-footer {
+  padding: $spacing-md;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-sm;
+}
+
+// ============================================================================
+// Chooser Grid
+// ============================================================================
+
+.chooser-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $grid-gap;
+  padding: $spacing-md;
+  overflow-y: auto;
+  max-height: 300px;
+  @include scrollbar-thin;
+}
+
+// ============================================================================
+// About Modal
+// ============================================================================
+
+.modal-about {
+  text-align: center;
+}
+
+.about-content {
+  padding: $spacing-lg;
+}
+
+.about-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto $spacing-md;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: auto;
+  }
+}
+
+.about-content h1 {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-xs;
+}
+
+.about-content .version {
+  font-size: $font-size-sm;
+  color: var(--color-text-muted);
+  margin-bottom: $spacing-md;
+}
+
+.about-content .description {
+  margin-bottom: $spacing-md;
+  line-height: $line-height-relaxed;
+}
+
+.about-content .author {
+  font-size: $font-size-sm;
+  color: var(--color-text-muted);
+  margin-bottom: $spacing-md;
+}
+
+.about-links {
+  display: flex;
+  justify-content: center;
+  gap: $spacing-md;
+
+  a {
+    font-size: $font-size-sm;
+  }
+}
+
+// ============================================================================
+// Buttons
+// ============================================================================
+
+.btn-primary {
+  height: $btn-height-md;
+  padding: 0 $spacing-md;
+  background: var(--color-primary);
+  color: white;
+  border-radius: $radius-md;
+  font-weight: $font-weight-medium;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: $color-primary-light;
+  }
+}
+
+.btn-secondary {
+  height: $btn-height-md;
+  padding: 0 $spacing-md;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: $radius-md;
+  font-weight: $font-weight-medium;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+// ============================================================================
+// Toast Notifications
+// ============================================================================
+
+.toast-container {
+  position: fixed;
+  bottom: $spacing-lg;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: $z-toast;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  pointer-events: none;
+}
+
+.toast {
+  padding: $spacing-sm $spacing-md;
+  background: var(--color-bg);
+  border-radius: $radius-md;
+  box-shadow: $shadow-md;
+  font-size: $font-size-sm;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity $transition-normal, transform $transition-normal;
+  pointer-events: auto;
+
+  &.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  &.toast-success {
+    border-left: 3px solid var(--color-success);
+  }
+
+  &.toast-error {
+    border-left: 3px solid var(--color-error);
+  }
+
+  &.toast-info {
+    border-left: 3px solid var(--color-primary);
+  }
+}
+
+// ============================================================================
+// Utility Classes
+// ============================================================================
+
+.hidden {
+  display: none !important;
+}
+
+.sr-only {
+  @include visually-hidden;
+}
+
+.truncate {
+  @include truncate;
+}

@@ -1,4 +1,57 @@
-node_modules
-dist
-src/renderer/styles/dist
-test/results
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+src-tauri/target/
+
+# Tauri generated files
+src-tauri/gen/
+
+# IDE / Editor
+.idea/
+*.swp
+*.swo
+.vscode/*
+!.vscode/settings.json
+!.vscode/github-instructions.md
+!.vscode/extensions.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Lock files (optional - uncomment if you prefer)
+# package-lock.json
+
+# Rust
+**/*.rs.bk
+Cargo.lock
+
+# Test outputs
+test-results/
+playwright-report/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Build artifacts
+*.dmg
+*.app
+*.exe
+*.msi
+*.deb
+*.rpm
+*.AppImage
+*.snap

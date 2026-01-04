@@ -1,0 +1,241 @@
+name: Release
+
+on:
+    push:
+        tags:
+            - "v*"
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Release version (e.g., 4.0.0)"
+                required: true
+                type: string
+
+permissions:
+    contents: write
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    create-release:
+        runs-on: ubuntu-latest
+        outputs:
+            release_id: ${{ steps.create-release.outputs.id }}
+            release_upload_url: ${{ steps.create-release.outputs.upload_url }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Get version from tag or input
+              id: get-version
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                    echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+                  else
+                    echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Create Release
+              id: create-release
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: v${{ steps.get-version.outputs.version }}
+                  release_name: CrossOver v${{ steps.get-version.outputs.version }}
+                  draft: true
+                  prerelease: false
+                  body: |
+                      ## CrossOver v${{ steps.get-version.outputs.version }}
+
+                      ### Downloads
+
+                      - **Windows**: `CrossOver_${{ steps.get-version.outputs.version }}_x64-setup.exe`
+                      - **macOS**: `CrossOver_${{ steps.get-version.outputs.version }}_universal.dmg`
+                      - **Linux**: `CrossOver_${{ steps.get-version.outputs.version }}_amd64.AppImage` or `.deb`
+
+                      ### Changes
+
+                      See [CHANGELOG.md](https://github.com/lacymorrow/crossover/blob/main/CHANGELOG.md) for details.
+
+                      ### Installation
+
+                      Download the appropriate file for your operating system and run the installer.
+
+                      **Note**: This app is not code-signed. You may need to allow it to run:
+                      - **Windows**: Click "More info" → "Run anyway"
+                      - **macOS**: Right-click → Open, or allow in Security preferences
+
+    build-macos:
+        needs: create-release
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Setup Rust
+              uses: dtolnay/rust-action@stable
+              with:
+                  targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+            - name: Cache Rust dependencies
+              uses: Swatinem/rust-cache@v2
+              with:
+                  workspaces: src-tauri
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build Tauri app (Universal)
+              run: npm run tauri:build -- --target universal-apple-darwin
+              env:
+                  CI: false
+
+            - name: Upload Release Assets (DMG)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.create-release.outputs.release_upload_url }}
+                  asset_path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/CrossOver_${{ github.ref_name }}_universal.dmg
+                  asset_name: CrossOver_${{ github.ref_name }}_universal.dmg
+                  asset_content_type: application/octet-stream
+
+    build-windows:
+        needs: create-release
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Setup Rust
+              uses: dtolnay/rust-action@stable
+
+            - name: Cache Rust dependencies
+              uses: Swatinem/rust-cache@v2
+              with:
+                  workspaces: src-tauri
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build Tauri app
+              run: npm run tauri:build
+              env:
+                  CI: false
+
+            - name: Upload Release Assets (NSIS)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.create-release.outputs.release_upload_url }}
+                  asset_path: src-tauri/target/release/bundle/nsis/CrossOver_${{ github.ref_name }}_x64-setup.exe
+                  asset_name: CrossOver_${{ github.ref_name }}_x64-setup.exe
+                  asset_content_type: application/octet-stream
+
+    build-linux:
+        needs: create-release
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install system dependencies
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libxdo-dev
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Setup Rust
+              uses: dtolnay/rust-action@stable
+
+            - name: Cache Rust dependencies
+              uses: Swatinem/rust-cache@v2
+              with:
+                  workspaces: src-tauri
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build Tauri app
+              run: npm run tauri:build
+              env:
+                  CI: false
+
+            - name: Upload Release Assets (AppImage)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.create-release.outputs.release_upload_url }}
+                  asset_path: src-tauri/target/release/bundle/appimage/cross-over_${{ github.ref_name }}_amd64.AppImage
+                  asset_name: CrossOver_${{ github.ref_name }}_amd64.AppImage
+                  asset_content_type: application/octet-stream
+
+            - name: Upload Release Assets (deb)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.create-release.outputs.release_upload_url }}
+                  asset_path: src-tauri/target/release/bundle/deb/cross-over_${{ github.ref_name }}_amd64.deb
+                  asset_name: CrossOver_${{ github.ref_name }}_amd64.deb
+                  asset_content_type: application/octet-stream
+
+    publish-release:
+        needs: [create-release, build-macos, build-windows, build-linux]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Publish Release
+              uses: eregon/publish-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  release_id: ${{ needs.create-release.outputs.release_id }}
+
+            - name: Generate update manifest
+              run: |
+                  echo '{
+                    "version": "${{ github.ref_name }}",
+                    "notes": "See release notes on GitHub",
+                    "pub_date": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
+                    "platforms": {
+                      "darwin-universal": {
+                        "signature": "",
+                        "url": "https://github.com/lacymorrow/crossover/releases/download/${{ github.ref_name }}/CrossOver_${{ github.ref_name }}_universal.dmg"
+                      },
+                      "linux-x86_64": {
+                        "signature": "",
+                        "url": "https://github.com/lacymorrow/crossover/releases/download/${{ github.ref_name }}/CrossOver_${{ github.ref_name }}_amd64.AppImage"
+                      },
+                      "windows-x86_64": {
+                        "signature": "",
+                        "url": "https://github.com/lacymorrow/crossover/releases/download/${{ github.ref_name }}/CrossOver_${{ github.ref_name }}_x64-setup.exe"
+                      }
+                    }
+                  }' > latest.json
+
+            - name: Upload update manifest
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.create-release.outputs.release_upload_url }}
+                  asset_path: latest.json
+                  asset_name: latest.json
+                  asset_content_type: application/json
