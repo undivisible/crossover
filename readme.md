@@ -370,7 +370,7 @@ Start developing in `src/main.js` and `src/renderer.js`. `index.html` contains t
 ##### _You will need [node.js](https://nodejs.org/) v14.x.x installed. If you have `nvm` installed, run `nvm install && nvm use` to switch to the correct node version._
 
 ```
-$ yarn && yarn start
+$ bun install && bun tauri:dev
 ```
 
 ### Build
@@ -381,10 +381,10 @@ _wine_ and _mono_ must be installed for Windows builds _(macOS)_
 [_multipass_](https://multipass.run/) must be installed for Snap builds _(macOS)_
 
 ```
-$ yarn build
+$ bun tauri:build
 ```
 
-> Or `yarn build:all`
+> Or `bun run tauri:build:win` etc.
 
 #### Build issues
 

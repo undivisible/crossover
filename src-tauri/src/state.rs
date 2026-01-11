@@ -63,12 +63,18 @@ pub struct Preferences {
 
     /// Custom keybinds
     pub keybinds: KeybindPreferences,
+
+    /// Whether to hide when aiming down sights (right click)
+    pub hide_on_ads: bool,
+
+    /// Helper reticle type (none, dot, cross, circle)
+    pub reticle: String,
 }
 
 impl Default for Preferences {
     fn default() -> Self {
         Self {
-            crosshair: DEFAULT_CROSSHAIR.to_string(),
+            crosshair: "target-dot.png".to_string(),
             size: DEFAULT_SIZE,
             opacity: DEFAULT_OPACITY,
             color: DEFAULT_COLOR.to_string(),
@@ -79,6 +85,8 @@ impl Default for Preferences {
             position_y: None,
             start_on_boot: false,
             keybinds: KeybindPreferences::default(),
+            hide_on_ads: false,
+            reticle: "dot".to_string(),
         }
     }
 }
@@ -231,6 +239,26 @@ impl AppState {
     /// Set follow mouse state
     pub fn set_follow_mouse(&self, follow: bool) {
         self.preferences.write().follow_mouse = follow;
+    }
+
+    /// Check if hide on ADS is enabled
+    pub fn get_hide_on_ads(&self) -> bool {
+        self.preferences.read().hide_on_ads
+    }
+
+    /// Set hide on ADS state
+    pub fn set_hide_on_ads(&self, hide: bool) {
+        self.preferences.write().hide_on_ads = hide;
+    }
+
+    /// Get reticle type
+    pub fn get_reticle(&self) -> String {
+        self.preferences.read().reticle.clone()
+    }
+
+    /// Set reticle type
+    pub fn set_reticle(&self, reticle: String) {
+        self.preferences.write().reticle = reticle;
     }
 
     /// Get saved position

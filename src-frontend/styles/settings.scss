@@ -14,10 +14,594 @@ $gray-700: #374151;
 $gray-800: #1f2937;
 $gray-900: #111827;
 
-$accent: #3b82f6;
+$accent: #3b82f6; // Modern blue
+$accent-glow: rgba(59, 130, 246, 0.5);
 $success: #10b981;
 $error: #ef4444;
 $warning: #f59e0b;
+
+$bg-dark: #0a0a0a;
+$bg-panel: rgba(20, 20, 20, 0.7);
+$border-color: rgba(255, 255, 255, 0.1);
+
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2xl: 48px;
+
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+
+$transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+$transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+$font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Roboto', sans-serif;
+
+// ============================================================================
+// Reset & Base
+// ============================================================================
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+html,
+body {
+	width: 100%;
+	height: 100%;
+	font-family: $font-sans;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	background: $bg-dark;
+	color: $white;
+    overflow: hidden;
+}
+
+body {
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+button {
+	font-family: inherit;
+	cursor: pointer;
+	border: none;
+	background: none;
+	color: inherit;
+	user-select: none;
+    outline: none;
+}
+
+input {
+	font-family: inherit;
+    outline: none;
+}
+
+// ============================================================================
+// Settings Window Layout
+// ============================================================================
+
+.settings-window {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	background: radial-gradient(circle at top center, #1a1a1a 0%, #000000 100%);
+    color: $gray-200;
+}
+
+.settings-header {
+    flex-shrink: 0;
+    padding: $spacing-lg $spacing-xl;
+    border-bottom: 1px solid $border-color;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: $white;
+        letter-spacing: -0.01em;
+    }
+}
+
+.settings-content {
+	flex: 1;
+	padding: $spacing-xl;
+	overflow-y: auto;
+	overflow-x: hidden;
+
+    // Smooth scrolling
+    scroll-behavior: smooth;
+
+    // Mask for fading content at bottom
+    mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
+}
+
+// ============================================================================
+// Settings Sections
+// ============================================================================
+
+.settings-section {
+	margin-bottom: $spacing-2xl;
+    animation: fadeIn 0.4s ease-out backwards;
+
+    @for $i from 1 through 10 {
+        &:nth-child(#{$i}) {
+            animation-delay: #{$i * 50}ms;
+        }
+    }
+
+	&:last-child {
+		margin-bottom: $spacing-xl;
+	}
+
+	h3 {
+		font-size: 12px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: $gray-500;
+		margin-bottom: $spacing-lg;
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+
+        &::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, $border-color, transparent);
+        }
+	}
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+// ============================================================================
+// Crosshair Grid
+// ============================================================================
+
+.crosshair-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+	gap: $spacing-md;
+	margin-bottom: $spacing-md;
+}
+
+.crosshair-item {
+	aspect-ratio: 1;
+	background: rgba(255, 255, 255, 0.03);
+	border-radius: $radius-lg;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all $transition-base;
+	border: 1px solid transparent;
+	padding: $spacing-md;
+    position: relative;
+    overflow: hidden;
+
+	&:hover {
+		background: rgba(255, 255, 255, 0.08);
+		transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+	}
+
+	&:active {
+		transform: translateY(0);
+	}
+
+	&.active {
+		background: rgba(59, 130, 246, 0.15);
+		border-color: $accent;
+		box-shadow: 0 0 0 1px $accent, 0 4px 12px rgba(59, 130, 246, 0.2);
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle, $accent-glow 0%, transparent 70%);
+            opacity: 0.2;
+        }
+	}
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+		pointer-events: none;
+        z-index: 1;
+	}
+}
+
+// ============================================================================
+// Sliders
+// ============================================================================
+
+.slider-control {
+	display: flex;
+	align-items: center;
+	gap: $spacing-lg;
+    background: $bg-panel;
+    padding: $spacing-lg;
+    border-radius: $radius-lg;
+    border: 1px solid $border-color;
+}
+
+.slider {
+	flex: 1;
+	height: 4px;
+	-webkit-appearance: none;
+	appearance: none;
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 2px;
+	cursor: pointer;
+
+	&::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 16px;
+		height: 16px;
+		background: $white;
+		border-radius: 50%;
+		cursor: grab;
+		box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+		transition: all $transition-fast;
+
+		&:hover {
+			transform: scale(1.2);
+            background: $accent;
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2);
+		}
+
+		&:active {
+			transform: scale(1);
+            cursor: grabbing;
+		}
+	}
+}
+
+.slider-value {
+	min-width: 60px;
+	text-align: right;
+	font-size: 14px;
+	font-weight: 600;
+	color: $accent;
+	font-variant-numeric: tabular-nums;
+    font-family: monospace;
+}
+
+// ============================================================================
+// Color Picker
+// ============================================================================
+
+.color-control {
+	display: flex;
+	align-items: center;
+	gap: $spacing-lg;
+}
+
+.color-picker {
+	width: 48px;
+	height: 48px;
+	border: none;
+    padding: 0;
+	border-radius: 50%;
+	cursor: pointer;
+	background: transparent;
+	overflow: hidden;
+	transition: transform $transition-fast;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+	&::-webkit-color-swatch-wrapper {
+		padding: 0;
+	}
+
+	&::-webkit-color-swatch {
+		border: 2px solid rgba(255, 255, 255, 0.2);
+		border-radius: 50%;
+	}
+
+	&:hover {
+		transform: scale(1.1);
+	}
+
+	&:active {
+		transform: scale(0.95);
+	}
+}
+
+.color-input {
+	flex: 1;
+	background: $bg-panel;
+	border: 1px solid $border-color;
+	border-radius: $radius-md;
+	padding: $spacing-md;
+	color: $gray-200;
+	font-size: 14px;
+	font-weight: 500;
+	transition: all $transition-fast;
+	font-variant-numeric: tabular-nums;
+	text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+	&:focus {
+		border-color: $accent;
+		box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        color: $white;
+	}
+
+	&:hover {
+		border-color: rgba(255, 255, 255, 0.2);
+	}
+}
+
+// ============================================================================
+// Reticle Options
+// ============================================================================
+
+.reticle-options {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: $spacing-sm;
+    background: $bg-panel;
+    padding: $spacing-xs;
+    border-radius: $radius-lg;
+    border: 1px solid $border-color;
+}
+
+.reticle-option {
+	padding: $spacing-md;
+	background: transparent;
+	border-radius: $radius-md;
+	font-size: 13px;
+	font-weight: 500;
+	transition: all $transition-fast;
+	color: $gray-400;
+
+	&:hover {
+		color: $white;
+        background: rgba(255, 255, 255, 0.05);
+	}
+
+	&.active {
+		background: $accent;
+		color: $white;
+		box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+	}
+}
+
+// ============================================================================
+// Action Buttons
+// ============================================================================
+
+.action-buttons {
+	display: grid; // Changed from flex to grid for better layout
+	grid-template-columns: 1fr; // Stack vertically by default
+	gap: $spacing-sm;
+
+    @media (min-width: 500px) {
+        grid-template-columns: repeat(3, 1fr); // 3 columns on larger screens
+    }
+}
+
+.action-btn {
+	padding: $spacing-md;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid $border-color;
+	border-radius: $radius-md;
+	font-size: 13px;
+	font-weight: 600;
+	transition: all $transition-fast;
+	color: $gray-300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+
+	&:hover {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.2);
+		transform: translateY(-1px);
+        color: $white;
+	}
+
+	&:active {
+		transform: translateY(0);
+		background: rgba(255, 255, 255, 0.08); // Slightly lighter on active
+	}
+
+    &.btn-primary {
+        background: $accent;
+        border-color: transparent;
+        color: $white;
+
+        &:hover {
+            background: lighten($accent, 5%);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+    }
+}
+
+// ============================================================================
+// Toggle Switch
+// ============================================================================
+
+.toggle-control {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: $spacing-lg;
+	cursor: pointer;
+    background: $bg-panel;
+    border-radius: $radius-lg;
+    border: 1px solid $border-color;
+    transition: all $transition-fast;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        background: lighten($bg-panel, 2%);
+    }
+}
+
+.toggle-label {
+	font-size: 14px;
+	font-weight: 500;
+	color: $gray-200;
+}
+
+.toggle-switch {
+	width: 40px;
+	height: 22px;
+	background: rgba(255, 255, 255, 0.1); // inactive track
+	border-radius: 99px; // pill shape
+	position: relative;
+	transition: background $transition-base;
+
+	&.checked {
+		background: $success;
+	}
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: 3px;
+		left: 3px;
+		width: 16px;
+		height: 16px;
+		background: $white;
+		border-radius: 50%;
+		transition: transform $transition-base cubic-bezier(0.5, 1.5, 0.5, 1); // Bouncy effect
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	}
+
+	&.checked::after {
+		transform: translateX(18px);
+	}
+}
+
+// ============================================================================
+// Toast Notifications
+// ============================================================================
+
+.toast-container {
+	position: fixed;
+	bottom: $spacing-lg;
+	right: $spacing-lg;
+	z-index: 11000;
+	display: flex;
+	flex-direction: column;
+	gap: $spacing-sm;
+	pointer-events: none;
+}
+
+.toast {
+	background: rgba(20, 20, 20, 0.9);
+	border: 1px solid $border-color;
+	border-radius: $radius-md;
+	padding: $spacing-md $spacing-lg;
+	color: $white;
+	font-size: 13px;
+	font-weight: 500;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	animation: slideInUp $transition-base;
+	pointer-events: auto;
+	min-width: 240px;
+	opacity: 0;
+	transform: translateY(20px);
+	transition: opacity $transition-base, transform $transition-base;
+    display: flex;
+    align-items: center;
+    border-left: 3px solid transparent;
+
+	&.show {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	&.toast-success {
+		border-left-color: $success;
+	}
+
+	&.toast-error {
+		border-left-color: $error;
+	}
+
+	&.toast-warning {
+		border-left-color: $warning;
+	}
+
+	&.toast-info {
+		border-left-color: $accent;
+	}
+}
+
+// ============================================================================
+// Animations
+// ============================================================================
+
+@keyframes slideInUp {
+	from {
+		transform: translateY(20px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+// ============================================================================
+// Scrollbar Styling
+// ============================================================================
+
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 3px;
+
+	&:hover {
+		background: rgba(255, 255, 255, 0.2);
+	}
+}
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+.hidden {
+	display: none !important;
+}
 
 $spacing-xs: 4px;
 $spacing-sm: 8px;
@@ -386,6 +970,64 @@ input {
 	&:active {
 		transform: translateY(0);
 		background: rgba(255, 255, 255, 0.12);
+	}
+}
+
+// ============================================================================
+// Toggle Switch
+// ============================================================================
+
+.toggle-control {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: $spacing-sm 0;
+	cursor: pointer;
+    background: rgba(255, 255, 255, 0.03);
+    padding: $spacing-lg;
+    border-radius: $radius-lg;
+    border: 1px solid transparent;
+    transition: all $transition-fast;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+}
+
+.toggle-label {
+	font-size: 15px;
+	font-weight: 600;
+	color: $white;
+}
+
+.toggle-switch {
+	width: 44px;
+	height: 24px;
+	background: rgba(255, 255, 255, 0.15);
+	border-radius: 12px;
+	position: relative;
+	transition: background $transition-fast;
+
+	&.checked {
+		background: $success;
+	}
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		width: 20px;
+		height: 20px;
+		background: $white;
+		border-radius: 50%;
+		transition: transform $transition-fast;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+	}
+
+	&.checked::after {
+		transform: translateX(20px);
 	}
 }
 

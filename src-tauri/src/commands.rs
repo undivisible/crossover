@@ -189,26 +189,39 @@ pub fn is_visible(state: tauri::State<'_, Arc<AppState>>) -> bool {
 /// Get list of available crosshair images
 #[command]
 pub async fn get_crosshair_list(app: AppHandle) -> Result<Vec<String>, String> {
-    let resource_path = app
-        .path()
-        .resource_dir()
-        .map_err(|e| e.to_string())?
-        .join("crosshairs");
-
     let mut crosshairs = Vec::new();
+    let file_extensions = ["png", "svg", "gif", "jpg", "jpeg", "webp"];
 
-    if let Ok(entries) = std::fs::read_dir(&resource_path) {
-        for entry in entries.flatten() {
-            if let Some(name) = entry.file_name().to_str() {
-                if name.ends_with(".png") || name.ends_with(".svg") {
-                    crosshairs.push(name.to_string());
+    // Helper to read directory
+    let read_dir = |path: std::path::PathBuf, list: &mut Vec<String>| {
+        if let Ok(entries) = std::fs::read_dir(&path) {
+            for entry in entries.flatten() {
+                if let Some(name) = entry.file_name().to_str() {
+                    let lower_name = name.to_lowercase();
+                    if file_extensions.iter().any(|ext| lower_name.ends_with(ext)) {
+                        list.push(name.to_string());
+                    }
                 }
             }
         }
+    };
+
+    // 1. Resource directory
+    if let Ok(resource_path) = app.path().resource_dir() {
+        read_dir(resource_path.join("crosshairs"), &mut crosshairs);
     }
 
-    // Sort alphabetically
+    // 2. App Data directory (UserData)
+    if let Ok(app_data_path) = app.path().app_data_dir() {
+        read_dir(app_data_path.join("crosshairs"), &mut crosshairs);
+    }
+
+    // Sort alphabetically and deduplicate behavior if needed (names are unique keys in frontend usually)
     crosshairs.sort();
+    crosshairs.dedup(); // In case name collides, though filesystem usually prevents exact collisions in same dir.
+                        // Here we might have collision between resource and app_data.
+                        // If we have same filename in both, frontend will probably just pick one by URL path logic.
+                        // Ideally we might want to prioritize one, but simple dedup is fine for now.
 
     Ok(crosshairs)
 }
@@ -249,6 +262,9 @@ pub async fn reset_preferences(
         .map_err(|e| e.to_string())?;
     app.emit("color-changed", &prefs.color)
         .map_err(|e| e.to_string())?;
+    app.emit("reticle-changed", &prefs.reticle) // Add this
+        .map_err(|e| e.to_string())?;
+    // No event for hide_on_ads as it's just a setting
 
     Ok(())
 }
@@ -261,14 +277,7 @@ pub async fn set_follow_mouse(
     follow: bool,
 ) -> Result<(), String> {
     state.set_follow_mouse(follow);
-
-    // Start or stop mouse following
-    if follow {
-        crate::mouse::start_following(&app, state.inner().clone())?;
-    } else {
-        crate::mouse::stop_following(&state)?;
-    }
-
+    crate::mouse::update_mouse_listener_state(&app, state.inner().clone())?;
     Ok(())
 }
 
@@ -276,6 +285,74 @@ pub async fn set_follow_mouse(
 #[command]
 pub fn get_follow_mouse(state: tauri::State<'_, Arc<AppState>>) -> bool {
     state.get_follow_mouse()
+}
+
+/// Set hide on ADS mode
+#[command]
+pub async fn set_hide_on_ads(
+    app: AppHandle,
+    state: tauri::State<'_, Arc<AppState>>,
+    hide: bool,
+) -> Result<(), String> {
+    state.set_hide_on_ads(hide);
+    crate::mouse::update_mouse_listener_state(&app, state.inner().clone())?;
+    Ok(())
+}
+
+/// Get hide on ADS state
+#[command]
+pub fn get_hide_on_ads(state: tauri::State<'_, Arc<AppState>>) -> bool {
+    state.get_hide_on_ads()
+}
+
+/// Set the reticle type
+#[command]
+pub async fn set_reticle(
+    app: AppHandle,
+    state: tauri::State<'_, Arc<AppState>>,
+    reticle: String,
+) -> Result<(), String> {
+    state.set_reticle(reticle.clone());
+    app.emit("reticle-changed", &reticle)
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Get the reticle type
+#[command]
+pub fn get_reticle(state: tauri::State<'_, Arc<AppState>>) -> String {
+    state.get_reticle()
+}
+
+/// Import a custom crosshair
+#[command]
+pub async fn import_crosshair(app: AppHandle, path: String) -> Result<String, String> {
+    // Determine destination in app_data_dir (userData)
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let custom_dir = app_data_dir.join("crosshairs");
+
+    // Ensure directory exists
+    if !custom_dir.exists() {
+        std::fs::create_dir_all(&custom_dir).map_err(|e| e.to_string())?;
+    }
+
+    // Get filename from path
+    let src_path = std::path::Path::new(&path);
+    let filename = src_path
+        .file_name()
+        .ok_or("Invalid path")?
+        .to_str()
+        .ok_or("Invalid filename")?
+        .to_string();
+
+    // Destination path
+    let dest_path = custom_dir.join(&filename);
+
+    // Copy file
+    std::fs::copy(&path, &dest_path).map_err(|e| e.to_string())?;
+
+    // Return the filename to be set as current crosshair
+    Ok(filename)
 }
 
 /// Create a shadow (duplicate) window

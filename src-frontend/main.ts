@@ -6,9 +6,8 @@
  */
 
 import { invoke } from "@tauri-apps/api/core"
-import { listen, emit } from "@tauri-apps/api/event"
+import { listen } from "@tauri-apps/api/event"
 import { getCurrentWindow } from "@tauri-apps/api/window"
-import { open } from "@tauri-apps/plugin-dialog"
 
 // ============================================================================
 // Type Definitions
@@ -22,6 +21,8 @@ interface Preferences {
 	locked: boolean
 	visible: boolean
 	follow_mouse: boolean
+	hide_on_ads: boolean
+	reticle: string
 	position_x: number | null
 	position_y: number | null
 }
@@ -33,16 +34,11 @@ interface Preferences {
 const app = document.getElementById("app")!
 const crosshairImg = document.getElementById("crosshair") as HTMLImageElement
 const crosshairWrapper = document.getElementById("crosshair-wrapper")!
-const dragHandle = document.getElementById("drag-handle")!
 const lockIndicator = document.getElementById("lock-indicator")!
 const reticle = document.getElementById("reticle")!
 const settingsButton = document.getElementById("settings-button")!
 
 // Modals
-const chooserModal = document.getElementById("chooser-modal")!
-const chooserClose = document.getElementById("chooser-close")!
-const chooserGrid = document.getElementById("chooser-grid")!
-const btnImport = document.getElementById("btn-import")!
 const aboutModal = document.getElementById("about-modal")!
 const aboutClose = document.getElementById("about-close")!
 
@@ -53,17 +49,13 @@ const toastContainer = document.getElementById("toast-container")!
 // State
 // ============================================================================
 
+// State
 let isLocked = false
-let isDragging = false
-let currentReticle = "none"
 
 // ============================================================================
 // Tauri Commands (IPC)
 // ============================================================================
 
-async function setCrosshair(crosshair: string): Promise<void> {
-	await invoke("set_crosshair", { crosshair })
-}
 
 async function getCrosshair(): Promise<string> {
 	return await invoke("get_crosshair")
@@ -85,10 +77,6 @@ async function getSize(): Promise<number> {
 	return await invoke("get_size")
 }
 
-async function setColor(color: string): Promise<void> {
-	await invoke("set_color", { color })
-}
-
 async function getColor(): Promise<string> {
 	return await invoke("get_color")
 }
@@ -101,32 +89,13 @@ async function getLocked(): Promise<boolean> {
 	return await invoke("is_locked")
 }
 
-async function centerWindow(): Promise<void> {
-	await invoke("center_window")
-}
-
-async function moveToNextDisplay(): Promise<void> {
-	await invoke("move_to_next_display")
-}
-
-async function toggleVisibility(): Promise<boolean> {
-	return await invoke("toggle_visibility")
-}
-
 async function getCrosshairList(): Promise<string[]> {
 	return await invoke("get_crosshair_list")
 }
 
-async function savePreferences(): Promise<void> {
-	await invoke("save_preferences")
-}
 
-async function resetPreferences(): Promise<void> {
-	await invoke("reset_preferences")
-}
-
-async function createShadowWindow(): Promise<string> {
-	return await invoke("create_shadow_window")
+async function getReticle(): Promise<string> {
+	return await invoke("get_reticle")
 }
 
 // ============================================================================
@@ -146,27 +115,30 @@ function updateSize(size: number): void {
 	crosshairWrapper.style.setProperty("--crosshair-size", `${size}px`)
 	crosshairImg.style.width = `${size}px`
 	crosshairImg.style.height = `${size}px`
-	sizeSlider.value = String(size)
-	sizeValue.textContent = `${size}px`
 }
 
 function updateOpacity(opacity: number): void {
 	crosshairWrapper.style.opacity = String(opacity)
-	opacitySlider.value = String(Math.round(opacity * 100))
-	opacityValue.textContent = `${Math.round(opacity * 100)}%`
 }
 
 function updateColor(color: string): void {
 	crosshairWrapper.style.setProperty("--crosshair-color", color)
 	reticle.style.color = color
-	colorPicker.value = color
-	colorInput.value = color
 }
 
 function updateLockState(locked: boolean): void {
 	isLocked = locked
 	app.classList.toggle("locked", locked)
-	dragHandle.classList.toggle("hidden", locked)
+
+    // Update drag regions
+    if (locked) {
+        document.body.removeAttribute('data-tauri-drag-region')
+        app.removeAttribute('data-tauri-drag-region')
+    } else {
+        document.body.setAttribute('data-tauri-drag-region', '')
+        app.setAttribute('data-tauri-drag-region', '')
+    }
+
 	lockIndicator.classList.toggle("hidden", !locked)
 	settingsButton.classList.toggle("hidden", locked)
 
@@ -178,7 +150,22 @@ function updateLockState(locked: boolean): void {
 }
 
 function updateReticle(type: string): void {
-	currentReticle = type
+	// Hide all reticle shapes
+	document.querySelectorAll(".reticle-shape").forEach((el) => {
+		el.classList.add("hidden")
+	})
+
+	// Show selected reticle
+	if (type !== "none") {
+		reticle.classList.remove("hidden")
+		const shape = document.getElementById(`reticle-${type}`)
+		if (shape) {
+			shape.classList.remove("hidden")
+		}
+	} else {
+		reticle.classList.add("hidden")
+	}
+}
 
 	// Hide all reticle shapes
 	document.querySelectorAll(".reticle-shape").forEach((el) => {
@@ -195,15 +182,6 @@ function updateReticle(type: string): void {
 	} else {
 		reticle.classList.add("hidden")
 	}
-
-	// Update button states
-	reticleOptions.forEach((btn) => {
-		btn.classList.toggle(
-			"active",
-			btn.getAttribute("data-reticle") === type,
-		)
-	})
-}
 
 function showToast(
 	message: string,
@@ -231,69 +209,20 @@ function showToast(
 // Event Handlers
 // ============================================================================
 
-function setupDragHandle(): void {
-	let startX = 0
-	let startY = 0
-	let windowX = 0
-	let windowY = 0
-
-	// Make entire window draggable when unlocked
-	const startDrag = async (e: MouseEvent) => {
-		if (isLocked) return
-
-		// Don't start drag if clicking on interactive elements
-		const target = e.target as HTMLElement
-		if (
-			target.tagName === "BUTTON" ||
-			target.tagName === "INPUT" ||
-			target.closest("button")
-		) {
-			return
-		}
-
-		isDragging = true
-		startX = e.screenX
-		startY = e.screenY
-
-		const position = await getCurrentWindow().outerPosition()
-		windowX = position.x
-		windowY = position.y
-
-		document.body.style.cursor = "grabbing"
-		e.preventDefault()
-	}
-
-	// Add drag handler to entire app
-	app.addEventListener("mousedown", startDrag)
-	dragHandle.addEventListener("mousedown", startDrag)
-
-	document.addEventListener("mousemove", async (e) => {
-		if (!isDragging) return
-
-		const deltaX = e.screenX - startX
-		const deltaY = e.screenY - startY
-
-		await getCurrentWindow().setPosition({
-			type: "Physical",
-			x: windowX + deltaX,
-			y: windowY + deltaY,
-		})
-	})
-
-	document.addEventListener("mouseup", () => {
-		if (isDragging) {
-			isDragging = false
-			document.body.style.cursor = ""
-			savePreferences().catch(console.error)
-		}
-	})
+function setupDragHandlers(): void {
+    // Initial state
+    if (!isLocked) {
+        document.body.setAttribute('data-tauri-drag-region', '')
+        app.setAttribute('data-tauri-drag-region', '')
+    }
 }
 
 async function openSettingsWindow(): Promise<void> {
 	const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow")
 
 	// Check if settings window already exists
-	const existing = WebviewWindow.getByLabel("settings")
+    // @ts-ignore: getByLabel relies on Tauri internal
+	const existing = await WebviewWindow.getByLabel("settings")
 	if (existing) {
 		await existing.show()
 		await existing.setFocus()
@@ -311,8 +240,9 @@ async function openSettingsWindow(): Promise<void> {
 		center: true,
 		resizable: true,
 		decorations: true,
-		alwaysOnTop: false,
+		alwaysOnTop: true,
 		skipTaskbar: false,
+		theme: "dark"
 	})
 
 	await settingsWindow.once("tauri://created", () => {
@@ -330,35 +260,6 @@ function setupSettingsButton(): void {
 	})
 }
 
-function setupChooserModal(): void {
-	chooserClose.addEventListener("click", () => {
-		chooserModal.classList.add("hidden")
-	})
-
-	btnImport.addEventListener("click", async () => {
-		const selected = await open({
-			multiple: false,
-			filters: [
-				{
-					name: "Images",
-					extensions: ["png", "svg", "jpg", "jpeg", "gif", "webp"],
-				},
-			],
-		})
-
-		if (selected) {
-			// TODO: Import custom crosshair
-			showToast("Custom crosshair import coming soon", "info")
-		}
-	})
-
-	// Close on backdrop click
-	chooserModal.addEventListener("click", (e) => {
-		if (e.target === chooserModal) {
-			chooserModal.classList.add("hidden")
-		}
-	})
-}
 
 function setupAboutModal(): void {
 	aboutClose.addEventListener("click", () => {
@@ -374,57 +275,13 @@ function setupAboutModal(): void {
 }
 
 async function loadCrosshairGrid(): Promise<void> {
+    // Only used for verification/logging now as chooser is in Settings
 	try {
 		const crosshairs = await getCrosshairList()
-		const currentCrosshair = await getCrosshair()
-
-		chooserGrid.innerHTML = ""
-		crosshairGrid.innerHTML = ""
-
-		for (const filename of crosshairs) {
-			const item = createCrosshairItem(
-				filename,
-				filename === currentCrosshair,
-			)
-			chooserGrid.appendChild(item.cloneNode(true))
-
-			// Also add to settings mini-grid (first 6 items)
-			if (crosshairGrid.children.length < 6) {
-				crosshairGrid.appendChild(item)
-			}
-		}
+        console.log(`Loaded ${crosshairs.length} crosshairs`)
 	} catch (e) {
 		console.error("Failed to load crosshairs:", e)
 	}
-}
-
-function createCrosshairItem(filename: string, isActive: boolean): HTMLElement {
-	const item = document.createElement("button")
-	item.className = `crosshair-item${isActive ? " active" : ""}`
-	item.setAttribute("data-crosshair", filename)
-
-	const img = document.createElement("img")
-	img.src = `/crosshairs/${filename}`
-	img.alt = filename
-	img.draggable = false
-
-	item.appendChild(img)
-
-	item.addEventListener("click", async () => {
-		await setCrosshair(filename)
-		updateCrosshairImage(filename)
-		await savePreferences()
-
-		// Update active states
-		document.querySelectorAll(".crosshair-item").forEach((el) => {
-			el.classList.toggle(
-				"active",
-				el.getAttribute("data-crosshair") === filename,
-			)
-		})
-	})
-
-	return item
 }
 
 // ============================================================================
@@ -457,6 +314,11 @@ async function setupEventListeners(): Promise<void> {
 		updateColor(event.payload)
 	})
 
+    // Reticle changed
+    await listen<string>("reticle-changed", (event) => {
+        updateReticle(event.payload)
+    })
+
 	// Visibility changed
 	await listen<boolean>("visibility-changed", (event) => {
 		app.classList.toggle("hidden", !event.payload)
@@ -468,20 +330,9 @@ async function setupEventListeners(): Promise<void> {
 		await openSettingsWindow()
 	})
 
-	// Open chooser
+	// Open chooser - Redirects to settings
 	await listen("open-chooser", async () => {
-		console.log("open-chooser event received")
-		// Unlock if locked so user can interact
-		if (isLocked) {
-			console.log("Unlocking before showing chooser")
-			await toggleLock()
-		}
-		console.log("Loading crosshair grid")
-		await loadCrosshairGrid()
-		console.log("Showing chooser modal")
-		chooserModal.classList.remove("hidden")
-		// Force a reflow
-		chooserModal.offsetHeight
+	    await openSettingsWindow()
 	})
 
 	// Show about
@@ -502,6 +353,7 @@ async function setupEventListeners(): Promise<void> {
 		updateOpacity(prefs.opacity)
 		updateColor(prefs.color)
 		updateLockState(prefs.locked)
+        updateReticle(prefs.reticle)
 	})
 }
 
@@ -534,16 +386,6 @@ function playSound(name: string): void {
 // Context Menu
 // ============================================================================
 
-function setupContextMenu(): void {
-	app.addEventListener("contextmenu", (e) => {
-		e.preventDefault()
-
-		if (!isLocked) {
-			// Toggle settings panel on right-click
-			settingsPanel.classList.toggle("hidden")
-		}
-	})
-}
 
 // ============================================================================
 // Keyboard Shortcuts (Local)
@@ -553,8 +395,6 @@ function setupLocalKeyboardShortcuts(): void {
 	document.addEventListener("keydown", async (e) => {
 		// Escape closes modals/panels
 		if (e.key === "Escape") {
-			settingsPanel.classList.add("hidden")
-			chooserModal.classList.add("hidden")
 			aboutModal.classList.add("hidden")
 		}
 	})
@@ -566,12 +406,14 @@ function setupLocalKeyboardShortcuts(): void {
 
 async function loadInitialState(): Promise<void> {
 	try {
-		const [crosshair, size, opacity, color, locked] = await Promise.all([
+        // Missing reticle in original destructuring?
+		const [crosshair, size, opacity, color, locked, reticle] = await Promise.all([
 			getCrosshair(),
 			getSize(),
 			getOpacity(),
 			getColor(),
 			getLocked(),
+            getReticle(),
 		])
 
 		updateCrosshairImage(crosshair)
@@ -579,6 +421,7 @@ async function loadInitialState(): Promise<void> {
 		updateOpacity(opacity)
 		updateColor(color)
 		updateLockState(locked)
+        updateReticle(reticle)
 
 		await loadCrosshairGrid()
 	} catch (e) {
@@ -591,11 +434,9 @@ async function init(): Promise<void> {
 	console.log("CrossOver initializing...")
 
 	// Setup UI interactions
-	setupDragHandle()
+	setupDragHandlers()
 	setupSettingsButton()
-	setupChooserModal()
 	setupAboutModal()
-	setupContextMenu()
 	setupLocalKeyboardShortcuts()
 
 	// Preload sounds

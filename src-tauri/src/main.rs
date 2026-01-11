@@ -68,8 +68,11 @@ fn main() {
             }
 
             // Log initial state
-            info!("Initial state - Locked: {}, Visible: {}",
-                  state.is_locked(), state.is_visible());
+            info!(
+                "Initial state - Locked: {}, Visible: {}",
+                state.is_locked(),
+                state.is_visible()
+            );
 
             info!("Application setup complete");
             Ok(())
@@ -98,6 +101,11 @@ fn main() {
             commands::create_shadow_window,
             commands::close_shadow_window,
             commands::close_all_shadow_windows,
+            commands::set_hide_on_ads,
+            commands::get_hide_on_ads,
+            commands::set_reticle,
+            commands::get_reticle,
+            commands::import_crosshair,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

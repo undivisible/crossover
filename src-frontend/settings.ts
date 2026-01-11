@@ -5,24 +5,8 @@
 
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
-import { getCurrentWindow } from "@tauri-apps/api/window"
-import { open } from "@tauri-apps/plugin-dialog"
-
-// ============================================================================
-// Type Definitions
-// ============================================================================
-
-interface Preferences {
-	crosshair: string
-	size: number
-	opacity: number
-	color: string
-	locked: boolean
-	visible: boolean
-	follow_mouse: boolean
-	position_x: number | null
-	position_y: number | null
-}
+import { open as openDialog } from "@tauri-apps/plugin-dialog"
+import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart"
 
 // ============================================================================
 // DOM Elements
@@ -43,11 +27,10 @@ const btnDuplicate = document.getElementById("btn-duplicate")!
 const btnImport = document.getElementById("btn-import")!
 const toastContainer = document.getElementById("toast-container")!
 
-// ============================================================================
-// State
-// ============================================================================
-
-let currentReticle = "none"
+// Toggles
+const ctrlFollowMouse = document.getElementById("ctrl-follow-mouse")!
+const ctrlHideAds = document.getElementById("ctrl-hide-ads")!
+const ctrlAutostart = document.getElementById("ctrl-autostart")!
 
 // ============================================================================
 // Tauri Commands (IPC)
@@ -109,6 +92,35 @@ async function createShadowWindow(): Promise<string> {
 	return await invoke("create_shadow_window")
 }
 
+// New Commands
+async function getFollowMouse(): Promise<boolean> {
+	return await invoke("get_follow_mouse")
+}
+
+async function setFollowMouse(follow: boolean): Promise<void> {
+	await invoke("set_follow_mouse", { follow })
+}
+
+async function getHideOnAds(): Promise<boolean> {
+	return await invoke("get_hide_on_ads")
+}
+
+async function setHideOnAds(hide: boolean): Promise<void> {
+	await invoke("set_hide_on_ads", { hide })
+}
+
+async function getReticle(): Promise<string> {
+	return await invoke("get_reticle")
+}
+
+async function setReticle(reticle: string): Promise<void> {
+	await invoke("set_reticle", { reticle })
+}
+
+async function importCrosshair(path: string): Promise<string> {
+	return await invoke("import_crosshair", { path })
+}
+
 // ============================================================================
 // UI Update Functions
 // ============================================================================
@@ -128,11 +140,17 @@ function updateColorUI(color: string): void {
 	colorInput.value = color
 }
 
-function updateReticle(type: string): void {
-	currentReticle = type
+function updateReticleUI(type: string): void {
 	reticleOptions.forEach((btn) => {
 		btn.classList.toggle("active", btn.getAttribute("data-reticle") === type)
 	})
+}
+
+function updateToggleUI(element: HTMLElement, checked: boolean): void {
+	const switchEl = element.querySelector(".toggle-switch")
+	if (switchEl) {
+		switchEl.classList.toggle("checked", checked)
+	}
 }
 
 function showToast(message: string, type: "info" | "success" | "error" = "info"): void {
@@ -254,11 +272,59 @@ function setupEventListeners(): void {
 	reticleOptions.forEach((btn) => {
 		btn.addEventListener("click", () => {
 			const type = btn.getAttribute("data-reticle") || "none"
-			updateReticle(type)
-			// TODO: Send reticle type to main window
-			showToast(`Reticle: ${type}`, "info")
+			updateReticleUI(type)
+			setReticle(type).catch(console.error)
+			savePreferences().catch(console.error)
 		})
 	})
+
+	// Toggles
+	if (ctrlFollowMouse) {
+		ctrlFollowMouse.addEventListener("click", async () => {
+			const switchEl = ctrlFollowMouse.querySelector(".toggle-switch")
+			if (switchEl) {
+				const newState = !switchEl.classList.contains("checked")
+				updateToggleUI(ctrlFollowMouse, newState)
+				await setFollowMouse(newState)
+				await savePreferences()
+			}
+		})
+	}
+
+	if (ctrlHideAds) {
+		ctrlHideAds.addEventListener("click", async () => {
+			const switchEl = ctrlHideAds.querySelector(".toggle-switch")
+			if (switchEl) {
+				const newState = !switchEl.classList.contains("checked")
+				updateToggleUI(ctrlHideAds, newState)
+				await setHideOnAds(newState)
+				await savePreferences()
+			}
+		})
+	}
+
+	if (ctrlAutostart) {
+		ctrlAutostart.addEventListener("click", async () => {
+			const switchEl = ctrlAutostart.querySelector(".toggle-switch")
+			if (switchEl) {
+				const newState = !switchEl.classList.contains("checked")
+
+				try {
+					if (newState) {
+						await enable()
+						showToast("Start on Boot enabled", "success")
+					} else {
+						await disable()
+						showToast("Start on Boot disabled", "success")
+					}
+					updateToggleUI(ctrlAutostart, newState)
+				} catch (e) {
+					console.error("Failed to toggle autostart:", e)
+					showToast("Failed to toggle autostart", "error")
+				}
+			}
+		})
+	}
 
 	// Action buttons
 	btnCenter.addEventListener("click", async () => {
@@ -299,23 +365,35 @@ function setupEventListeners(): void {
 	})
 
 	btnImport.addEventListener("click", async () => {
-		const selected = await open({
-			multiple: false,
-			filters: [
-				{
-					name: "Images",
-					extensions: ["png", "svg", "jpg", "jpeg", "gif", "webp"],
-				},
-			],
-		})
+		try {
+			const selected = await openDialog({
+				multiple: false,
+				filters: [
+					{
+						name: "Images",
+						extensions: ["png", "svg", "jpg", "jpeg", "gif", "webp"],
+					},
+				],
+			})
 
-		if (selected) {
-			showToast("Custom crosshair import coming soon", "info")
+			if (selected) {
+				const path = Array.isArray(selected) ? selected[0] : (selected as string);
+				if (path) {
+					const filename = await importCrosshair(path)
+					await loadCrosshairGrid() // Reload grid to show new item
+					await setCrosshair(filename)
+					await savePreferences()
+					showToast(`Imported ${filename}`, "success")
+				}
+			}
+		} catch (e) {
+			console.error("Import failed:", e)
+			showToast("Import failed", "error")
 		}
 	})
 
 	// Listen for updates from main window
-	listen<string>("crosshair-changed", (event) => {
+	listen<string>("crosshair-changed", (_event) => {
 		loadCrosshairGrid().catch(console.error)
 	})
 
@@ -330,6 +408,10 @@ function setupEventListeners(): void {
 	listen<string>("color-changed", (event) => {
 		updateColorUI(event.payload)
 	})
+
+	listen<string>("reticle-changed", (event) => {
+		updateReticleUI(event.payload)
+	})
 }
 
 // ============================================================================
@@ -338,16 +420,25 @@ function setupEventListeners(): void {
 
 async function loadInitialState(): Promise<void> {
 	try {
-		const [crosshair, size, opacity, color] = await Promise.all([
-			getCrosshair(),
+        // Removed unused vars logic
+		const [size, opacity, color, reticle, followMouse, hideAds, autostartEnabled] = await Promise.all([
 			getSize(),
 			getOpacity(),
 			getColor(),
+			getReticle(),
+			getFollowMouse(),
+			getHideOnAds(),
+			isEnabled(),
 		])
 
 		updateSizeUI(size)
 		updateOpacityUI(opacity)
 		updateColorUI(color)
+		updateReticleUI(reticle)
+
+		if (ctrlFollowMouse) updateToggleUI(ctrlFollowMouse, followMouse)
+		if (ctrlHideAds) updateToggleUI(ctrlHideAds, hideAds)
+		if (ctrlAutostart) updateToggleUI(ctrlAutostart, autostartEnabled)
 
 		await loadCrosshairGrid()
 	} catch (e) {

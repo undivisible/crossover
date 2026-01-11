@@ -116,7 +116,15 @@
 				<!-- Advanced settings -->
 				<section class="settings-section">
 					<h3>Advanced</h3>
-					<div class="action-buttons">
+                    <div class="toggle-control" id="ctrl-follow-mouse">
+						<span class="toggle-label">Follow Mouse</span>
+						<div class="toggle-switch"></div>
+					</div>
+					<div class="toggle-control" id="ctrl-hide-ads">
+						<span class="toggle-label">Hide on ADS (Hold Right Click)</span>
+						<div class="toggle-switch"></div>
+					</div>
+					<div class="action-buttons" style="margin-top: 16px;">
 						<button id="btn-duplicate" class="action-btn">
 							Create Duplicate
 						</button>
@@ -125,6 +133,15 @@
 						</button>
 					</div>
 				</section>
+
+                <!-- System settings -->
+                <section class="settings-section">
+                    <h3>System</h3>
+                    <div class="toggle-control" id="ctrl-autostart">
+                        <span class="toggle-label">Start on Boot</span>
+                        <div class="toggle-switch"></div>
+                    </div>
+                </section>
 			</div>
 		</div>
 

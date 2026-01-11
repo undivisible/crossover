@@ -23,7 +23,7 @@ CrossOver is a customizable crosshair overlay application built with **Tauri 2**
    - Removed `global-shortcut` config (expects unit type)
    - Removed `fs` config (uses capabilities system instead)
    - Removed `autostart` config (expects unit type)
-   
+
 2. **macOS Native APIs**: Replaced `cocoa 0.26` with `objc2 0.5` ecosystem
    - Using `objc2-app-kit` for NSWindow APIs
    - Direct pointer casting instead of Retained wrapper
@@ -37,22 +37,22 @@ CrossOver is a customizable crosshair overlay application built with **Tauri 2**
 ## Commands
 
 ### Development
-- `npm run dev` - Start Vite dev server for frontend
-- `npm run tauri:dev` - Run the full Tauri app in development mode
-- `npm run check` - TypeScript type checking
+- `bun dev` - Start Vite dev server for frontend
+- `bun tauri:dev` - Run the full Tauri app in development mode
+- `bun run check` - TypeScript type checking
 
 ### Building
-- `npm run build` - Build frontend assets only
-- `npm run tauri:build` - Build production app for current platform
-- `npm run tauri:build:mac` - Build for macOS (universal binary)
-- `npm run tauri:build:win` - Build for Windows
-- `npm run tauri:build:linux` - Build for Linux
+- `bun run build` - Build frontend assets only
+- `bun tauri:build` - Build production app for current platform
+- `bun tauri:build:mac` - Build for macOS (universal binary)
+- `bun tauri:build:win` - Build for Windows
+- `bun tauri:build:linux` - Build for Linux
 
 ### Code Quality
-- `npm run lint` - Run ESLint on frontend source
-- `npm run lint:fix` - Run ESLint with auto-fix
-- `npm run format` - Format code with Prettier
-- `npm run format:check` - Check formatting without changes
+- `bun run lint` - Run ESLint on frontend source
+- `bun run lint:fix` - Run ESLint with auto-fix
+- `bun run format` - Format code with Prettier
+- `bun run format:check` - Check formatting without changes
 
 ### Rust-specific
 - `cd src-tauri && cargo build` - Build Rust backend
